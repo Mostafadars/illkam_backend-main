@@ -1,0 +1,12 @@
+services:
+  spring:
+    # ECR로부터 Spring Boot 이미지를 pull 받아 컨테이너 실행
+    image: 376129855492.dkr.ecr.ap-northeast-2.amazonaws.com/tago:latest
+    restart: always
+    ports:
+      - '8080:8080'
+    container_name: tago-spring
+    environment:
+      DATABASE_URL: jdbc:mysql://main-database.cx6q4qqys102.ap-northeast-2.rds.amazonaws.com:3306/illkam?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+      DATABASE_USERNAME: admin
+      DATABASE_PASSWORD: illkam121
