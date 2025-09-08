@@ -22,11 +22,6 @@ public class UsersController {
         return "hello";
     }
 
-    @GetMapping("/test2")
-    public String test(){
-        return "hello from mostafa";
-    }
-
     @PostMapping("/login")
     public Long login(@RequestBody UserLoginDto dto){
         return usersService.login(dto);
