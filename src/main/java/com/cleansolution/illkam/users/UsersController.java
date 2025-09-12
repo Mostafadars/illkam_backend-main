@@ -98,6 +98,24 @@ public class UsersController {
         return response;
     }
 
+    @PutMapping("/{id}/order-consent")
+    public void updateOrderConsent(@PathVariable Long id, @RequestBody OrderConsentDto dto) {
+        Users user = usersRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("유저가 없습니다."));
+        user.setOrderConsent(dto.getOrderConsent());
+        usersRepository.save(user);
+    }
+
+    @GetMapping("/{id}/order-consent")
+    public OrderConsentDto getOrderConsent(@PathVariable Long id) {
+        Users user = usersRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("유저가 없습니다."));
+
+        OrderConsentDto response = new OrderConsentDto();
+        response.setOrderConsent(user.getOrderConsent());
+        return response;
+    }
+
 
     // New Feature 2: Admin login and logout
     // You can add more admin-specific endpoints here
