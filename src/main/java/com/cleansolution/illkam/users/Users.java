@@ -215,6 +215,10 @@ public class Users extends BaseTimestampEntity {
     @Builder.Default
     private Boolean marketingConsent = null; // null means not specified, true means consented
 
+    @Column
+    @Builder.Default
+    private Boolean orderConsent = null; // null means not specified, true means consented
+
     // New Feature 2: Admin login and logout
     @Column
     @Builder.Default
@@ -262,5 +266,9 @@ public class Users extends BaseTimestampEntity {
 
     public void setMarketingConsent(Boolean marketingConsent) {
         this.marketingConsent = marketingConsent;
+    }
+
+    public void setOrderConsent(Boolean orderConsent) {
+        this.orderConsent = orderConsent;
     }
 }
