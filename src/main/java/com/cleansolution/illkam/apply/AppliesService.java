@@ -40,7 +40,7 @@ public class AppliesService {
                     works.getEmployer(),
                     "일깜 신청",
                     users.getName() + "님이 일깜에 신청하셨어요.",
-                    "work", works.getId());
+                    "work", works.getId().toString());
         } catch (Exception e) {
             System.out.println(e);
         }
@@ -61,13 +61,13 @@ public class AppliesService {
                 work.getAppliesList().forEach((elem) -> {
                     if (!Objects.equals(elem.getApplier().getId(), aplier.getId())) {
                         try {
-                            fcmService.sendMessage(elem.getApplier(), "일깜 만료", "신청하신 일깜에서 다른 신청자가 확정되었어요.", "work", work.getId());
+                            fcmService.sendMessage(elem.getApplier(), "일깜 만료", "신청하신 일깜에서 다른 신청자가 확정되었어요.", "work", work.getId().toString());
                         } catch (Exception e) {
                             System.err.println("FCM 전송 실패: " + elem.getApplier().getId() + " - " + e.getMessage());
                         }
                     } else {
                         try {
-                            fcmService.sendMessage(aplier, "일깜 확정", "신청하신 일깜에서 선정되셨어요.", "work", work.getId());
+                            fcmService.sendMessage(aplier, "일깜 확정", "신청하신 일깜에서 선정되셨어요.", "work", work.getId().toString());
                         } catch (Exception e) {
                             System.err.println("FCM 전송 실패: " + elem.getApplier().getId() + " - " + e.getMessage());
                         }
@@ -77,7 +77,7 @@ public class AppliesService {
             if (updateDto.getStatus() == 9) {
 //                일깜 고용자를 없애줘야 함
                 work.updateWorkStatus(false, null);
-                fcmService.sendMessage(aplier, "일깜 확정 취소", "확정된 일깜이 취소되었어요.", "work", work.getId());
+                fcmService.sendMessage(aplier, "일깜 확정 취소", "확정된 일깜이 취소되었어요.", "work", work.getId().toString());
             }
             worksRepository.save(work);
 
