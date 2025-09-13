@@ -80,7 +80,7 @@ public class WorksService {
                         "일깜 수정",
                         "지원하신 " + elem.getWorks().getEmployer().getName() + "님의 일깜이 수정되었습니다.",
                         "work",
-                        works.getId()
+                        works.getId().toString()
                 );
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -137,7 +137,7 @@ public class WorksService {
         workImagesRepository.deleteAll(work.getWorkImages());
         appliesList.forEach(apply -> {
             try {
-                fcmService.sendMessage(apply.getApplier(), "일깜 삭제 안내", apply.getWorks().getEmployer().getName() + "님의 일깜이 삭제되었습니다.", "work", apply.getWorks().getId());
+                fcmService.sendMessage(apply.getApplier(), "일깜 삭제 안내", apply.getWorks().getEmployer().getName() + "님의 일깜이 삭제되었습니다.", "work", apply.getWorks().getId().toString());
             } catch (Exception e) {
                 System.out.println(e);
             }

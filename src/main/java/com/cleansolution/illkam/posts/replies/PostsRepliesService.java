@@ -30,7 +30,7 @@ public class PostsRepliesService {
                     post.getWriter(),
                     "게시글 답글",
                     "작성하신 게시글에 답글이 달렸어요.",
-                    "post", post.getId()
+                    "post", post.getId().toString()
             );
         } catch (Exception e) {
             System.out.println(e);
@@ -48,7 +48,7 @@ public class PostsRepliesService {
                 .build();
         postsRepliesRepository.save(replies);
         try {
-            fcmService.sendMessage(post.getWriter(), "1:1 문의 답변", "작성하신 문의에 답글이 달렸어요.", "post", post.getId());
+            fcmService.sendMessage(post.getWriter(), "1:1 문의 답변", "작성하신 문의에 답글이 달렸어요.", "post", post.getId().toString());
         } catch (Exception e) {
             System.out.println(e);
         }
