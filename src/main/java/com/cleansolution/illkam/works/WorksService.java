@@ -3,6 +3,12 @@ package com.cleansolution.illkam.works;
 
 import com.cleansolution.illkam.apply.Applies;
 import com.cleansolution.illkam.apply.AppliesRepository;
+import com.cleansolution.illkam.chats.socket.repository.ChatMessageRepository;
+import com.cleansolution.illkam.chats.socket.repository.ChatRoomRepository;
+import com.cleansolution.illkam.chats.socket.repository.UnreadChatMessageRepository;
+import com.cleansolution.illkam.chats.socket.repository.entity.ChatMessage;
+import com.cleansolution.illkam.chats.socket.repository.entity.ChatRoom;
+import com.cleansolution.illkam.chats.socket.repository.entity.UnreadChatMessage;
 import com.cleansolution.illkam.firebase.FCMService;
 import com.cleansolution.illkam.users.Users;
 import com.cleansolution.illkam.users.UsersRepository;
@@ -45,6 +51,9 @@ public class WorksService {
     private final WorkImagesRepository workImagesRepository;
     private final FCMService fcmService;
     private final AppliesRepository appliesRepository;
+    private final ChatRoomRepository chatRoomRepository;
+    private final UnreadChatMessageRepository unreadChatMessageRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
 
     @Transactional
@@ -130,20 +139,88 @@ public class WorksService {
         return new WorksResponseDto(entity, workReviews.isPresent());
     }
 
+//    @Transactional
+//    public Boolean deleteById(Long id) {
+//        Works work = worksRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("해당 일깜이 없습니다."));
+//        List<Applies> appliesList = work.getAppliesList();
+//        workImagesRepository.deleteAll(work.getWorkImages());
+//        appliesList.forEach(apply -> {
+//            try {
+//                fcmService.sendMessage(apply.getApplier(), "일깜 삭제 안내", apply.getWorks().getEmployer().getName() + "님의 일깜이 삭제되었습니다.", "work", apply.getWorks().getId().toString());
+//            } catch (Exception e) {
+//                System.out.println(e);
+//            }
+//            appliesRepository.delete(apply);
+//        });
+//        worksRepository.deleteById(id);
+//        return true;
+//    }
+
     @Transactional
     public Boolean deleteById(Long id) {
-        Works work = worksRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("해당 일깜이 없습니다."));
-        List<Applies> appliesList = work.getAppliesList();
+        System.out.println("Starting deleteById for work id: " + id);
+
+        Works work = worksRepository.findById(id).orElseThrow(() -> {
+            System.out.println("Work not found with id: " + id);
+            return new IllegalArgumentException("해당 일깜이 없습니다.");
+        });
+
+        System.out.println("Found work: " + work.getId());
+
+        // 1. First delete UnreadChatMessage records
+        List<ChatRoom> chatRooms = chatRoomRepository.findByWorkId(id);
+        System.out.println("Found " + chatRooms.size() + " chat rooms related to work");
+
+        for (ChatRoom chatRoom : chatRooms) {
+            System.out.println("Processing chat room: " + chatRoom.getId());
+
+            // Delete UnreadChatMessage records first
+            List<UnreadChatMessage> unreadMessages = unreadChatMessageRepository.findByChatRoomId(chatRoom.getId());
+            System.out.println("Found " + unreadMessages.size() + " unread messages for chat room");
+            if (!unreadMessages.isEmpty()) {
+                unreadChatMessageRepository.deleteAll(unreadMessages);
+                System.out.println("Deleted unread messages");
+            }
+
+            // Delete ChatMessage records
+            List<ChatMessage> chatMessages = chatMessageRepository.findByRoomId(chatRoom.getId());
+            System.out.println("Found " + chatMessages.size() + " chat messages for chat room");
+            if (!chatMessages.isEmpty()) {
+                chatMessageRepository.deleteAll(chatMessages);
+                System.out.println("Deleted chat messages");
+            }
+        }
+
+        // 2. Delete ChatRoom records
+        if (!chatRooms.isEmpty()) {
+            System.out.println("Deleting " + chatRooms.size() + " chat rooms");
+            chatRoomRepository.deleteAll(chatRooms);
+            System.out.println("Deleted chat rooms");
+        }
+
+        // 3. Delete work images
+        System.out.println("Deleting work images...");
         workImagesRepository.deleteAll(work.getWorkImages());
+        System.out.println("Deleted work images");
+
+        // 4. Handle applies
+        System.out.println("Handling applies...");
+        List<Applies> appliesList = work.getAppliesList();
         appliesList.forEach(apply -> {
             try {
                 fcmService.sendMessage(apply.getApplier(), "일깜 삭제 안내", apply.getWorks().getEmployer().getName() + "님의 일깜이 삭제되었습니다.", "work", apply.getWorks().getId().toString());
             } catch (Exception e) {
-                System.out.println(e);
+                System.out.println("Error sending FCM message: " + e.getMessage());
             }
             appliesRepository.delete(apply);
         });
+        System.out.println("Handled " + appliesList.size() + " applies");
+
+        // 5. Finally delete the work
+        System.out.println("Deleting work...");
         worksRepository.deleteById(id);
+
+        System.out.println("Delete completed successfully");
         return true;
     }
 
