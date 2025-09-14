@@ -16,4 +16,6 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, String> {
     List<ChatRoom> findAllByEmployerIdOrderByModifiedDateTimeDesc(Long employer);
     Optional<ChatRoom> findByWorkIdAndEmployeeId(Long workId, Long employeeId);
     Optional<ChatRoom> findByWorkIdAndEmployerIdAndEmployeeId(Long workId, Long employerId, Long employeeId);
+
+    List<ChatRoom> findByWorkId(Long workId);
 }

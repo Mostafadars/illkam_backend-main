@@ -12,4 +12,6 @@ public interface UnreadChatMessageRepository extends JpaRepository<UnreadChatMes
 
     List<UnreadChatMessage> findByReaderId(Long userid);
 
+    List<UnreadChatMessage> findByChatRoomId(String chatRoomId);
+
 }

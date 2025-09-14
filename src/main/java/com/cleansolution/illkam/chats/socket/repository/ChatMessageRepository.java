@@ -8,12 +8,13 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
     Page<ChatMessage> findAllByRoomId(String roomId, Pageable pageable);
 
-    Optional<ChatMessage> findByRoomId(String roomId);
+//    Optional<ChatMessage> findByRoomId(String roomId);
 
     @Transactional
     @Modifying(clearAutomatically = true)
@@ -30,5 +31,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE ChatMessage cm SET cm.readCount = 2 WHERE cm.id = :messageId AND cm.readCount = 1")
     void updateReadCountByMessageId(Long messageId);
+
+    List<ChatMessage> findByRoomId(String roomId);
 
 }
