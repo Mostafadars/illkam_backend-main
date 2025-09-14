@@ -11,17 +11,25 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-@Configuration
-public class FirebaseConfig {
-
-    @Bean
-    public FirebaseApp initializeFirebase() throws IOException {
-        // 서비스 계정 키 파일의 경로를 설정
+@Bean
+public FirebaseApp initializeFirebase() throws IOException {
+    try {
         InputStream serviceAccount = new ClassPathResource("serviceAccountKey.json").getInputStream();
+        System.out.println("Service account file loaded successfully");
+        
+        GoogleCredentials credentials = GoogleCredentials.fromStream(serviceAccount);
+        System.out.println("Credentials created successfully");
+        
         FirebaseOptions options = new FirebaseOptions.Builder()
-                .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                .setCredentials(credentials)
                 .build();
-
-        return FirebaseApp.initializeApp(options);
+        
+        FirebaseApp app = FirebaseApp.initializeApp(options);
+        System.out.println("Firebase initialized successfully");
+        return app;
+        
+    } catch (Exception e) {
+        System.err.println("Firebase initialization error: " + e.getMessage());
+        throw e;
     }
 }
