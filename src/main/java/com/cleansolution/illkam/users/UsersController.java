@@ -135,4 +135,36 @@ public class UsersController {
         return "Logged out successfully";
     }
 
+
+    // New Feature 15: Users change optional agreement selections from my page
+
+    // New endpoint to update both marketing and order consent
+    @PutMapping("/{id}/consents")
+    public void updateConsents(@PathVariable Long id, @RequestBody UserConsentsDto dto) {
+        Users user = usersRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("유저가 없습니다."));
+
+        if (dto.getMarketingConsent() != null) {
+            user.setMarketingConsent(dto.getMarketingConsent());
+        }
+
+        if (dto.getOrderConsent() != null) {
+            user.setOrderConsent(dto.getOrderConsent());
+        }
+
+        usersRepository.save(user);
+    }
+
+    // New endpoint to get both marketing and order consent
+    @GetMapping("/{id}/consents")
+    public UserConsentsDto getConsents(@PathVariable Long id) {
+        Users user = usersRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("유저가 없습니다."));
+
+        UserConsentsDto response = new UserConsentsDto();
+        response.setMarketingConsent(user.getMarketingConsent());
+        response.setOrderConsent(user.getOrderConsent());
+        return response;
+    }
+
 }
