@@ -9,10 +9,4 @@ import lombok.NoArgsConstructor;
 @Data
 public class VersionCheckResponse {
     private boolean updateAvailable;
-    private boolean forceUpdate;
-    private String latestVersion;
-    private String minRequiredVersion;
-    private String storeUrl;
-    private String releaseNotes;
-
 }
