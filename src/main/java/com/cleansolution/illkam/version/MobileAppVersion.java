@@ -19,33 +19,12 @@ public class MobileAppVersion {
     private Long id;
 
     @Column(nullable = false)
-    private String platform; // "ios" or "android"
-
-    @Column(nullable = false)
     private String versionCode;
-
-    @Column(nullable = false)
-    private Integer versionNumber;
-
-    private String minRequiredVersion;
-    private Boolean forceUpdate = false;
-    private String releaseNotes;
-    private String storeUrl;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
 
-    private Boolean isActive = true;
-
-    public MobileAppVersion(String platform, String versionCode, Integer versionNumber, String minRequiredVersion, Boolean forceUpdate, String releaseNotes, String storeUrl, Boolean isActive) {
-        this.platform = platform;
+    public MobileAppVersion(String versionCode) {
         this.versionCode = versionCode;
-        this.versionNumber = versionNumber;
-        this.minRequiredVersion = minRequiredVersion;
-        this.forceUpdate = forceUpdate;
-        this.releaseNotes = releaseNotes;
-        this.storeUrl = storeUrl;
-        this.isActive = isActive;
     }
-
 }

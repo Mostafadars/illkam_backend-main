@@ -23,20 +23,18 @@ public class AppVersionController {
             @RequestBody VersionCheckRequest request) {
 
         // Validate request
-        if (request.getPlatform() == null || request.getCurrentVersion() == null) {
-            throw new IllegalArgumentException("Platform and currentVersion are required");
+        if (request.getCurrentVersion() == null) {
+            throw new IllegalArgumentException("currentVersion is required");
         }
 
         VersionCheckResponse response = appVersionService.checkForUpdate(request);
         return ResponseEntity.ok(response);
     }
 
-    // Admin endpoint to manage versions
+    // Admin endpoint to create new version
     @PostMapping("/version")
     public ResponseEntity<MobileAppVersion> createVersion(
             @RequestBody MobileAppVersion version) {
-        // Calculate version number
-        version.setVersionNumber(appVersionService.parseVersionNumber(version.getVersionCode()));
         MobileAppVersion savedVersion = versionRepository.save(version);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedVersion);
     }
