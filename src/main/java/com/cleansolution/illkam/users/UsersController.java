@@ -167,4 +167,27 @@ public class UsersController {
         return response;
     }
 
+
+    // New Feature of Logout user
+
+    @PostMapping("/{id}/logout")
+    public Boolean userLogout(@PathVariable Long id) {
+        try {
+            Users user = usersRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("유저가 없습니다."));
+
+            // Remove the FCM token from the user
+            user.setFcmToken(null);
+            usersRepository.save(user);
+
+            return true;
+
+        } catch (Exception e) {
+            System.out.println("Logout error: " + e.getMessage());
+            return false;
+        }
+    }
+
+
+
 }
