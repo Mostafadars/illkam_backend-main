@@ -42,10 +42,10 @@ public class PostsAdminController {
         return postsService.findAll(Optional.ofNullable(categories.getId()), pageable);
     }
 
-//    @PostMapping("/notice")
-//    public Long writeNotice(@RequestBody PostsSaveRequestDto requestDto) {
-//        return postsService.save(requestDto);
-//    }
+    @PostMapping("/notice")
+    public Long writeNotice(@RequestBody PostsSaveRequestDto requestDto) {
+        return postsService.save(requestDto);
+    }
 
     // New Feature 1: Admin Posts and Notifications
     @PostMapping("/notice/{option}")
