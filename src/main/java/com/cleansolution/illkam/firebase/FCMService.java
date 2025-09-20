@@ -174,4 +174,96 @@ public class FCMService {
 //        // FCM 메시지 작성
 //        return notificationsRepository.findByUserId(id);
 //    }
+
+    // New Feature 1: Admin Posts and Notifications
+    @Async
+    public void sendMessage2(Users user, String title, String body, String routeName, String targetPageId) throws Exception {
+        System.out.println("=== DEBUG: sendMessageWithStringTarget called ===");
+        System.out.println("User: " + user.getName() + " (ID: " + user.getId() + ")");
+        System.out.println("Title: " + title);
+        System.out.println("Body: " + body);
+        System.out.println("RouteName: " + routeName);
+        System.out.println("TargetPageId: " + targetPageId);
+        System.out.println("FCM Token: " + user.getFcmToken());
+
+        // Additional validation before building the message
+        if (user.getFcmToken() == null || user.getFcmToken().trim().isEmpty()) {
+            throw new IllegalArgumentException("FCM token is null or empty for user: " + user.getId());
+        }
+
+        // FCM 메시지 작성
+        Message message = Message.builder()
+                .setToken(user.getFcmToken())
+                .setNotification(Notification.builder()
+                        .setTitle(title)
+                        .setBody(body)
+                        .build())
+                .putData("routeName", routeName)
+                .putData("targetPageId", targetPageId) // Keep as String
+                .build();
+
+        System.out.println("=== DEBUG: FCM Message built successfully ===");
+
+        try {
+            // 메시지 전송
+            String response = FirebaseMessaging.getInstance().send(message);
+            System.out.println("=== DEBUG: FCM message sent successfully ===");
+            System.out.println("FCM Response: " + response);
+
+            notificationsRepository.save(Notifications.builder()
+                    .body(body)
+                    .title(title)
+                    .routeName(routeName)
+                    .targetPageId(targetPageId) // Keep as String
+                    .user(user)
+                    .build());
+
+            System.out.println("=== DEBUG: Notification saved to database ===");
+            System.out.println("Successfully sent message: " + response);
+        } catch (Exception e) {
+            System.out.println("=== DEBUG: ERROR in sendMessageWithStringTarget ===");
+            System.out.println("Error message: " + e.getMessage());
+            System.out.println("Error type: " + e.getClass().getSimpleName());
+
+            // Re-throw the exception with more context
+            throw new Exception("Failed to send FCM message to user " + user.getId() + ": " + e.getMessage(), e);
+        }
+    }
+
+    public Boolean sendMessage2(Long id, FCMRequestDto dto) throws Exception {
+        System.out.println("=== DEBUG: sendMessage(Long id, FCMRequestDto dto) called ===");
+        System.out.println("User ID: " + id);
+        System.out.println("DTO Title: " + dto.getTitle());
+        System.out.println("DTO Body: " + dto.getBody());
+        System.out.println("DTO RouteName: " + dto.getRouteName());
+        System.out.println("DTO TargetPageId: " + dto.getTargetPageId());
+
+        try {
+            Users user = usersRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("해당 유저가 없습니다."));
+
+            System.out.println("=== DEBUG: User found successfully ===");
+            System.out.println("User Name: " + user.getName());
+            System.out.println("User ID: " + user.getId());
+            System.out.println("User FCM Token: " + user.getFcmToken());
+
+            // Check for null or empty token before proceeding
+            if (user.getFcmToken() == null || user.getFcmToken().trim().isEmpty()) {
+                System.out.println("=== DEBUG: User has no FCM token ===");
+                return false;
+            }
+
+            // For UUID targetPageId, we need to modify the sendMessage method to accept String instead of Long
+            sendMessage2(user, dto.getTitle(), dto.getBody(), dto.getRouteName(), dto.getTargetPageId());
+
+            System.out.println("=== DEBUG: sendMessage completed successfully ===");
+            return true;
+        } catch (Exception e) {
+            System.out.println("=== DEBUG: ERROR in sendMessage ===");
+            System.out.println("Error message: " + e.getMessage());
+            System.out.println("Error type: " + e.getClass().getSimpleName());
+
+            // Don't re-throw the exception, just return false
+            return false;
+        }
+    }
 }
