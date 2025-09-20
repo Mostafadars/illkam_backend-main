@@ -1,5 +1,7 @@
 package com.cleansolution.illkam.posts;
 
+import com.cleansolution.illkam.firebase.FCMRequestDto;
+import com.cleansolution.illkam.firebase.FCMService;
 import com.cleansolution.illkam.posts.categories.PostsCategories;
 import com.cleansolution.illkam.posts.categories.PostsCategoriesService;
 import com.cleansolution.illkam.posts.categories.dto.PostsCategoriesResponseDto;
@@ -8,6 +10,8 @@ import com.cleansolution.illkam.posts.dto.PostsResponseDto;
 import com.cleansolution.illkam.posts.dto.PostsSaveRequestDto;
 import com.cleansolution.illkam.posts.replies.PostsRepliesService;
 import com.cleansolution.illkam.posts.replies.dto.PostsRepliesSaveRequestDto;
+import com.cleansolution.illkam.users.Users;
+import com.cleansolution.illkam.users.UsersRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +28,8 @@ public class PostsAdminController {
     private final PostsService postsService;
     private final PostsCategoriesService postsCategoriesService;
     private final PostsRepliesService postsRepliesService;
+    private final UsersRepository usersRepository;
+    private final FCMService fcmService;
 
     //    어드민 기능
 
@@ -36,9 +42,127 @@ public class PostsAdminController {
         return postsService.findAll(Optional.ofNullable(categories.getId()), pageable);
     }
 
-    @PostMapping("/notice")
-    public Long writeNotice(@RequestBody PostsSaveRequestDto requestDto) {
-        return postsService.save(requestDto);
+//    @PostMapping("/notice")
+//    public Long writeNotice(@RequestBody PostsSaveRequestDto requestDto) {
+//        return postsService.save(requestDto);
+//    }
+
+    // New Feature 1: Admin Posts and Notifications
+    @PostMapping("/notice/{option}")
+    public Long writeNotice(@PathVariable int option, @RequestBody PostsSaveRequestDto requestDto) {
+        // Get marketing consent users for options 2 and 3
+        List<Users> marketingConsentUsers = null;
+        if (option == 2 || option == 3) {
+            marketingConsentUsers = usersRepository.findByMarketingConsentTrue();
+        }
+
+        // Option 1: Save post only (regular logic)
+        if (option == 1) {
+            return postsService.save(requestDto);
+        }
+
+        // Option 2: Send notification only (no post saving)
+        else if (option == 2) {
+            sendNotificationsToMarketingUsers(marketingConsentUsers, requestDto);
+            return -1L; // Return a dummy ID since no post is saved
+        }
+
+        // Option 3: Save post AND send notifications
+        else if (option == 3) {
+            Long postId = postsService.save(requestDto);
+            sendNotificationsToMarketingUsers(marketingConsentUsers, requestDto);
+            return postId;
+        }
+
+        // Invalid option
+        else {
+            throw new IllegalArgumentException("Invalid option value. Must be 1, 2, or 3.");
+        }
+    }
+
+//    private void sendNotificationsToMarketingUsers(List<Users> marketingUsers, PostsSaveRequestDto requestDto) {
+//        if (marketingUsers == null || marketingUsers.isEmpty()) {
+//            return;
+//        }
+//
+//        for (Users user : marketingUsers) {
+//            try {
+//                // Create FCM request DTO
+//                FCMRequestDto fcmRequest = FCMRequestDto.builder()
+//                        .title(requestDto.getTitle())
+//                        .body(requestDto.getContents())
+//                        .routeName("notice")
+//                        .targetPageId("") // Empty or appropriate value for notice
+//                        .build();
+//
+//                // Send notification
+//                fcmService.sendMessage(user.getId(), fcmRequest);
+//            } catch (Exception e) {
+//                // Log error but continue with other users
+//                System.err.println("Failed to send notification to user: " + user.getId() + ", Error: " + e.getMessage());
+//            }
+//        }
+//    }
+
+    private void sendNotificationsToMarketingUsers(List<Users> marketingUsers, PostsSaveRequestDto requestDto) {
+        if (marketingUsers == null || marketingUsers.isEmpty()) {
+            System.out.println("No marketing consent users found.");
+            return;
+        }
+
+        for (Users user : marketingUsers) {
+            try {
+                // Check if user has FCM token
+                if (user.getFcmToken() == null || user.getFcmToken().trim().isEmpty()) {
+                    System.out.println("Skipping user " + user.getId() + " (" + user.getName() + "): No FCM token available");
+                    continue;
+                }
+
+                // Check if token looks valid (basic validation)
+                if (!isValidFcmToken(user.getFcmToken())) {
+                    System.out.println("Skipping user " + user.getId() + " (" + user.getName() + "): Invalid FCM token format");
+                    continue;
+                }
+
+                // Create FCM request DTO
+                FCMRequestDto fcmRequest = FCMRequestDto.builder()
+                        .title(requestDto.getTitle())
+                        .body(requestDto.getContents())
+                        .routeName("notice")
+                        .targetPageId("") // Empty or appropriate value for notice
+                        .build();
+
+                // Send notification
+                fcmService.sendMessage2(user.getId(), fcmRequest);
+                System.out.println("Notification sent successfully to user " + user.getId() + " (" + user.getName() + ")");
+
+            } catch (Exception e) {
+                // Handle specific FCM errors
+                if (e.getMessage() != null) {
+                    if (e.getMessage().contains("Exactly one of token, topic or condition must be specified")) {
+                        System.out.println("Skipping user " + user.getId() + " (" + user.getName() + "): Invalid or missing FCM token");
+                    } else if (e.getMessage().contains("Requested entity was not found") ||
+                            e.getMessage().contains("UNREGISTERED")) {
+                        System.out.println("Skipping user " + user.getId() + " (" + user.getName() + "): FCM token is expired or unregistered");
+                    } else {
+                        System.out.println("Failed to send notification to user " + user.getId() + " (" + user.getName() + "): " + e.getMessage());
+                    }
+                } else {
+                    System.out.println("Failed to send notification to user " + user.getId() + " (" + user.getName() + "): Unknown error");
+                }
+            }
+        }
+    }
+
+    // Helper method to validate FCM token format
+    private boolean isValidFcmToken(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            return false;
+        }
+
+        // Basic validation: FCM tokens should be long strings with colons
+        // Actual format: usually starts with the project ID or contains multiple segments
+        return token.length() > 50 && token.contains(":");
     }
 
     @PutMapping("/notice/{postId}")

@@ -8,4 +8,7 @@ import java.util.List;
 
 public interface NotificationsRepository extends JpaRepository<Notifications,Long> {
     List<Notifications> findByUserId(Long id, Sort sort);
+
+    // Fix Delete User Bug with the chatroom
+    List<Notifications> findByUserId(Long userId);
 }

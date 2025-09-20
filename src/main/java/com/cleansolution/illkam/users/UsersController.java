@@ -1,6 +1,9 @@
 package com.cleansolution.illkam.users;
 
+import com.cleansolution.illkam.chats.socket.repository.ChatRoomRepository;
+import com.cleansolution.illkam.chats.socket.repository.entity.ChatRoom;
 import com.cleansolution.illkam.users.dto.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
@@ -63,11 +66,18 @@ public class UsersController {
     }
 
 //    유저 삭제
+//    @DeleteMapping("/{id}")
+//    public Boolean deleteUser(@PathVariable Long id){
+//        Users user = usersRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("유저가 없습니다."));
+//        usersRepository.delete(user);
+//        return true;
+//    }
+
+    // Fix Delete User Bug with the chatroom
     @DeleteMapping("/{id}")
     public Boolean deleteUser(@PathVariable Long id){
         Users user = usersRepository.findById(id).orElseThrow(()-> new IllegalArgumentException("유저가 없습니다."));
-        usersRepository.delete(user);
-        return true;
+        return usersService.deleteUser(user);
     }
 
 //    유저 유료회원 설정
