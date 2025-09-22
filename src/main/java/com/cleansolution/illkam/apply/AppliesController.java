@@ -1,9 +1,7 @@
 package com.cleansolution.illkam.apply;
 
 
-import com.cleansolution.illkam.apply.dto.AppliesResponseDto;
-import com.cleansolution.illkam.apply.dto.AppliesSaveRequestDto;
-import com.cleansolution.illkam.apply.dto.AppliesUpdateDto;
+import com.cleansolution.illkam.apply.dto.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,6 +39,12 @@ public class AppliesController {
         return appliesService.findByWorkId(id);
     }
 
+
+    // New Feature 12: Information exposure restriction and chatroom entry filtering
+    @PostMapping("/is-applied")
+    public IsAppliedResponseDto isApplied(@RequestBody IsAppliedRequestDto requestDto) {
+        return appliesService.isApplied(requestDto);
+    }
 
     //    TODO : Apply findAll
     //    TODO : Apply approve

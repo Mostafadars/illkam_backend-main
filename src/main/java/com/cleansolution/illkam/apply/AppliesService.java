@@ -1,9 +1,7 @@
 package com.cleansolution.illkam.apply;
 
 
-import com.cleansolution.illkam.apply.dto.AppliesResponseDto;
-import com.cleansolution.illkam.apply.dto.AppliesSaveRequestDto;
-import com.cleansolution.illkam.apply.dto.AppliesUpdateDto;
+import com.cleansolution.illkam.apply.dto.*;
 import com.cleansolution.illkam.firebase.FCMService;
 import com.cleansolution.illkam.users.Users;
 import com.cleansolution.illkam.users.UsersRepository;
@@ -108,8 +106,28 @@ public class AppliesService {
                 .collect(Collectors.toList());
     }
 
-
     private AppliesResponseDto convertToDTO(Applies applies) {
         return new AppliesResponseDto(applies);
+    }
+
+
+    // New Feature 12: Information exposure restriction and chatroom entry filtering
+    public IsAppliedResponseDto isApplied(IsAppliedRequestDto requestDto) {
+        // Find all applies for the given work
+        Works work = worksRepository.findById(requestDto.getWorkId())
+                .orElseThrow(() -> new IllegalArgumentException("해당 일깜이 존재하지 않습니다."));
+
+        List<Applies> appliesList = appliesRepository.findByWorks(work);
+
+        // Check if the applier has applied for this work
+        Optional<Applies> userApply = appliesList.stream()
+                .filter(apply -> apply.getApplier().getId().equals(requestDto.getApplierId()))
+                .findFirst();
+
+        if (userApply.isPresent()) {
+            return new IsAppliedResponseDto(true, userApply.get().getStatus());
+        } else {
+            return new IsAppliedResponseDto(false, null);
+        }
     }
 }
