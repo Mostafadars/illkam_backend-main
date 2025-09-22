@@ -5,12 +5,14 @@ import com.cleansolution.illkam.works.WorkReviews.WorkReviews;
 import com.cleansolution.illkam.works.WorkReviews.dto.WorkReviewDto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
+@Setter
 @Getter
 public class UsersResponseDto {
     private Long id;

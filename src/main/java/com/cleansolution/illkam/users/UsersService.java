@@ -11,6 +11,8 @@ import com.cleansolution.illkam.firebase.entity.Notifications;
 import com.cleansolution.illkam.users.dto.*;
 import com.cleansolution.illkam.works.WorkReviews.WorkReviews;
 import com.cleansolution.illkam.works.WorkReviews.WorkReviewsRepository;
+import com.cleansolution.illkam.works.Works;
+import com.cleansolution.illkam.works.WorksRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ public class UsersService {
     private final UnreadChatMessageRepository unreadChatMessageRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final NotificationsRepository notificationsRepository;
+    private final WorksRepository worksRepository;
 
     @Transactional
     public Long login(UserLoginDto loginDto){
@@ -202,5 +205,57 @@ public class UsersService {
 
         System.out.println("Delete completed successfully");
         return true;
+    }
+
+
+    // New Feature 12: Information exposure restriction and chatroom entry filtering
+    public UsersResponseDto getUserInfo(UserInfoRequestDto requestDto) {
+        // Validate that user1 exists
+        Users user1 = usersRepository.findById(requestDto.getUser1Id())
+                .orElseThrow(() -> new IllegalArgumentException("요청하는 유저가 없습니다."));
+
+        // If user2Id is null, return user1's full info
+        if (requestDto.getUser2Id() == null) {
+            List<WorkReviews> reviews = workReviewsRepository.findAllByTarget(user1);
+            return new UsersResponseDto(user1, reviews);
+        }
+
+        // Validate that user2 exists
+        Users user2 = usersRepository.findById(requestDto.getUser2Id())
+                .orElseThrow(() -> new IllegalArgumentException("정보를 요청하는 유저가 없습니다."));
+
+        List<WorkReviews> reviews = workReviewsRepository.findAllByTarget(user2);
+        UsersResponseDto responseDto = new UsersResponseDto(user2, reviews);
+
+        // If workId is null, return user2's info with sensitive data hidden
+        if (requestDto.getWorkId() == null) {
+            return hideSensitiveData(responseDto);
+        }
+
+        // If workId is provided, check if user1 is confirmed for this work
+        Works work = worksRepository.findById(requestDto.getWorkId())
+                .orElseThrow(() -> new IllegalArgumentException("해당 일깜이 존재하지 않습니다."));
+
+        // Check if user1 has a confirmed apply for this work
+        boolean isConfirmed = work.getAppliesList().stream()
+                .anyMatch(apply -> apply.getApplier().getId().equals(requestDto.getUser1Id())
+                        && apply.getStatus() == 1);
+
+        if (isConfirmed) {
+            // Return full user2 data
+            return responseDto;
+        } else {
+            // Return user2 data with sensitive data hidden
+            return hideSensitiveData(responseDto);
+        }
+    }
+
+    // Helper method to hide sensitive data
+    private UsersResponseDto hideSensitiveData(UsersResponseDto dto) {
+
+        dto.setBusinessNumber(null);
+        dto.setPhoneNumber(null);
+
+        return dto;
     }
 }
