@@ -202,6 +202,7 @@ public class UsersController {
     // New Feature 12: Information exposure restriction and chatroom entry filtering
     @PostMapping("/user-info")
     public UsersResponseDto getUserInfo(@RequestBody UserInfoRequestDto requestDto) {
+        System.out.println("==> Enter /user-info endpoint");
         return usersService.getUserInfo(requestDto);
     }
 
