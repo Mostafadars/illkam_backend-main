@@ -342,7 +342,7 @@ public class UsersService {
         Users user1 = usersRepository.findById(requestDto.getUser1Id())
                 .orElseThrow(() -> new IllegalArgumentException("요청하는 유저가 없습니다."));
 
-        System.out.println("Found " + user1.getId() + " user");
+        System.out.println("Found User 1: " + user1.getId());
 
         // If user2Id is null, return user1's full info
         if (requestDto.getUser2Id() == null) {
@@ -354,7 +354,7 @@ public class UsersService {
         Users user2 = usersRepository.findById(requestDto.getUser2Id())
                 .orElseThrow(() -> new IllegalArgumentException("정보를 요청하는 유저가 없습니다."));
 
-        System.out.println("Found " + user2.getId() + " user");
+        System.out.println("Found User 2: " + user2.getId());
 
         List<WorkReviews> reviews = workReviewsRepository.findAllByTarget(user2);
         UsersResponseDto responseDto = new UsersResponseDto(user2, reviews);
@@ -368,18 +368,34 @@ public class UsersService {
         Works work = worksRepository.findById(requestDto.getWorkId())
                 .orElseThrow(() -> new IllegalArgumentException("해당 일깜이 존재하지 않습니다."));
 
-        System.out.println("Found " + work.getId() + " work");
+        System.out.println("Found Work With ID: " + work.getId());
 
         // First, check if user1 is the employer of this work AND work is confirmed
         boolean isEmployerAndConfirmed = work.getEmployer().getId().equals(requestDto.getUser1Id())
                 && Boolean.TRUE.equals(work.getIsConfirmed());
 
-        System.out.println("Is employer and confirmed: " + isEmployerAndConfirmed);
+        System.out.println("Is User 1 Is Employer and Work Is Confirmed: " + isEmployerAndConfirmed);
 
         if (isEmployerAndConfirmed) {
             // User1 is the employer AND work is confirmed - return full user2 data
-            System.out.println("Found employer and confirmed work");
-            return responseDto;
+            System.out.println("Found User 1 As Employer and The Work Is Confirmed");
+//            return responseDto;
+
+            boolean isConfirmed = work.getAppliesList().stream()
+                    .anyMatch(apply -> apply.getApplier().getId().equals(requestDto.getUser2Id())
+                            && apply.getStatus() == 1);
+
+            System.out.println("Is User 2 Is Confirmed In The Work: " + isConfirmed);
+
+            if (isConfirmed) {
+                System.out.println("Found User 2 Is Not Confirmed In The Work");
+                System.out.println("Will Return User 2 Full Data");
+                return responseDto;
+            } else {
+                System.out.println("Found User 2 Is Confirmed In The Work");
+                System.out.println("Will Return User 2 Full Data Hidden");
+                return hideSensitiveData(responseDto);
+            }
         }
 
         // If not employer or work not confirmed, check if user1 has a confirmed apply for this work
@@ -387,15 +403,29 @@ public class UsersService {
                 .anyMatch(apply -> apply.getApplier().getId().equals(requestDto.getUser1Id())
                         && apply.getStatus() == 1);
 
-        System.out.println("Found " + isConfirmed + " work");
+        System.out.println("Found User 1 Is Confirmed In The Work: " + isConfirmed);
 
         if (isConfirmed) {
             // Return full user2 data (user1 is confirmed employee)
-            System.out.println("Found confirmed work");
-            return responseDto;
+            System.out.println("Yes, User 1 Not Employer But Confirmed In The Work");
+//            return responseDto;
+
+            boolean isEmployerAndConfirmed2 = work.getEmployer().getId().equals(requestDto.getUser2Id())
+                    && Boolean.TRUE.equals(work.getIsConfirmed());
+
+            if (isEmployerAndConfirmed2) {
+                System.out.println("Found User 2 is Employer and Work is Confirmed");
+                System.out.println("Return User 2 Full Data");
+                return responseDto;
+            } else {
+                System.out.println("Found User 2 is Not Employer and Work Dosen't Belong to him");
+                System.out.println("Return User 2 Full Data Hidden");
+                return hideSensitiveData(responseDto);
+            }
+
         } else {
             // User1 is neither confirmed employer nor confirmed employee - return sensitive data hidden
-            System.out.println("Found not confirmed work");
+            System.out.println("No, User 1 Not Employer And Not Confirmed In The Work");
             return hideSensitiveData(responseDto);
         }
     }
@@ -406,6 +436,21 @@ public class UsersService {
         System.out.println("Hide data of " + dto.getId() + " user");
         dto.setBusinessNumber(null);
         dto.setPhoneNumber(null);
+        return dto;
+    }
+
+    private UsersResponseDto hideAllSensitiveData(UsersResponseDto dto) {
+        System.out.println("==> Enter hideSensitiveData service");
+        System.out.println("Hide data of " + dto.getId() + " user");
+        dto.setBusinessNumber(null);
+        dto.setPhoneNumber(null);
+        dto.setEmail(null);
+        dto.setRating(null);
+        dto.setReviewCount(null);
+        dto.setReviews(null);
+        dto.setBusinessCertification(null);
+        dto.setCreatedDateTime(null);
+        dto.setModifiedDateTime(null);
         return dto;
     }
 
